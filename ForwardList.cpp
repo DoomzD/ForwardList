@@ -27,17 +27,12 @@ public:
         ++sz_;
     }
 
-    int size() {
-        return sz_;
-    }
-
     void print() const {
         Node* tempNode = head_;
         while (tempNode != nullptr) {
             std::cout << tempNode->data << " ";
             tempNode = tempNode->next;
         }
-        std::cout << std::endl;
     }
 
     void reverse() {
@@ -54,7 +49,7 @@ public:
         }
     }
 
-    List merge(List &lhs, List &rhs) {
+    List merge(List lhs, List rhs) {
         List mergedList;
         Node* lhsNode = lhs.head_;
         Node* rhsNode = rhs.head_;
