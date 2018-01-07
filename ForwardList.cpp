@@ -1,103 +1,148 @@
 #include <iostream>
+#include <cassert>
+
+const int BIG_INT = (1ll << 30) - 1;
 
 struct Node {
     int data = 0;
-    Node * next = nullptr;
+    Node* next = nullptr;
+
+    explicit Node(int value, Node* newNode) : data(value), next(newNode) {}
 };
 
 class List {
 public:
-    List() : head(nullptr), sz(0) {}
+    List() : head_(nullptr), sz_(0), isAllocated_(0) {}
 
-    void add(const int x) {
-        auto * tmp = new Node;
-        tmp->data = x;
-        tmp->next = head;
-        head = tmp;
-        ++sz;
+    void push_front(int x) {
+        isAllocated_ = true;
+        Node* newNode = new Node(x, head_);
+        head_ = newNode;
+        ++sz_;
     }
 
-    void show() const {
-        Node * tmp = head;
-        while (tmp != nullptr) {
-            std::cout << tmp->data << " ";
-            tmp = tmp->next;
+    void push_front(Node* newNode) {
+        newNode->next = head_;
+        head_ = newNode;
+        ++sz_;
+    }
+
+    int size() {
+        return sz_;
+    }
+
+    void print() const {
+        Node* tempNode = head_;
+        while (tempNode != nullptr) {
+            std::cout << tempNode->data << " ";
+            tempNode = tempNode->next;
+        }
+        std::cout << std::endl;
+    }
+
+    void reverse() {
+        Node* prevNode = nullptr;
+        Node* curNode = head_;
+        Node* nextNode = nullptr;
+
+        while (curNode != nullptr) {
+            nextNode = curNode->next;
+            curNode->next = prevNode;
+            prevNode = curNode;
+            head_ = curNode;
+            curNode = nextNode;
         }
     }
 
-    void merge(List &left, List &right) {
-        List tmp;
-        Node * leftNode = left.head;
-        Node * rightNode = right.head;
+    List merge(List &lhs, List &rhs) {
+        List mergedList;
+        Node* lhsNode = lhs.head_;
+        Node* rhsNode = rhs.head_;
 
-        while (leftNode != nullptr && rightNode != nullptr) {
-            if (leftNode->data < rightNode->data) {
-                tmp.add(leftNode->data);
-                leftNode = leftNode->next;
+        /// Как здесь уменьшить количество копирований?
+
+        while (lhsNode != nullptr && rhsNode != nullptr) {
+            if (lhsNode->data < rhsNode->data) {
+                Node* nextNode = lhsNode->next;
+                mergedList.push_front(lhsNode);
+                lhsNode = nextNode;
             } else {
-                tmp.add(rightNode->data);
-                rightNode = rightNode->next;
+                Node* nextNode = rhsNode->next;
+                mergedList.push_front(rhsNode);
+                rhsNode = nextNode;
             }
         }
-        while (leftNode != nullptr) {
-            tmp.add(leftNode->data);
-            leftNode = leftNode->next;
+        while (lhsNode != nullptr) {
+            Node* nextNode = lhsNode->next;
+            mergedList.push_front(lhsNode);
+            lhsNode = nextNode;
         }
-        while (rightNode != nullptr) {
-            tmp.add(rightNode->data);
-            rightNode = rightNode->next;
+        while (rhsNode != nullptr) {
+            Node* nextNode = rhsNode->next;
+            mergedList.push_front(rhsNode);
+            rhsNode = nextNode;
         }
 
-        Node * prev = nullptr;
-        Node * tmpNode = tmp.head;
-        while (1) {
-            Node * next = this->head->next;
-            this->head->next = prev;
-            this->head->data = tmpNode->data;
-            tmpNode = tmpNode->next;
-            prev = this->head;
-            if (next == nullptr) break;
-            this->head = next;
-
-        }
+        return mergedList;
     }
 
     void sort() {
-        if (sz < 2) return;
+        if (sz_ < 2) return;
 
-        List left;
-        List right;
+        List lhs;
+        List rhs;
 
-        int middle = sz / 2;
+        Node* head = head_;
 
-        Node * tmp = head;
-        while (left.sz < middle) {
-            left.add(tmp->data);
-            tmp = tmp->next;
+        int middle = sz_ / 2;
+
+        Node* curNode = head_;
+        while (lhs.sz_ < middle) {
+            Node* nextNode = curNode->next;
+            lhs.push_front(curNode);
+            curNode = nextNode;
 
         }
-        while (right.sz + left.sz < sz) {
-            right.add(tmp->data);
-            tmp = tmp->next;
+        while (rhs.sz_ + lhs.sz_ < sz_) {
+            Node* nextNode = curNode->next;
+            rhs.push_front(curNode);
+            curNode = nextNode;
         }
 
-        right.sort();
-        left.sort();
+        rhs.sort();
+        lhs.sort();
 
-        merge(left, right);
+        List mergedList = merge(lhs, rhs);
+        mergedList.reverse();
+
+        head_ = mergedList.head_;
+        Node* thisCurNode = head_;
+        Node* mergedCurNode = mergedList.head_;
+
+        while (thisCurNode != nullptr) {
+            thisCurNode->data = mergedCurNode->data;
+
+            thisCurNode = thisCurNode->next;
+            mergedCurNode = mergedCurNode->next;
+        }
     }
 
     ~List() {
-        while (head != nullptr) {
-            Node * tmp = head->next;
-            delete head;
-            head = tmp;
+        while (head_ != nullptr) {
+            if (isAllocated_) {
+                Node* tmp = head_->next;
+                delete head_;
+                head_ = tmp;
+            } else {
+                break;
+            }
         }
     }
 
 private:
-    Node * head;
-    int sz;
+    Node* head_;
+    int sz_;
+    bool isAllocated_;
 };
 
 int main() {
@@ -108,10 +153,10 @@ int main() {
     for (int i = 0; i < n; ++i) {
         int num;
         std::cin >> num;
-        list.add(num);
+        list.push_front(num);
     }
 
     list.sort();
 
-    list.show();
+    list.print();
 }
