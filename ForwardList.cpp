@@ -1,7 +1,4 @@
 #include <iostream>
-#include <cassert>
-
-const int BIG_INT = (1ll << 30) - 1;
 
 struct Node {
     int data = 0;
@@ -21,12 +18,6 @@ public:
         ++sz_;
     }
 
-    void push_front(Node* newNode) {
-        newNode->next = head_;
-        head_ = newNode;
-        ++sz_;
-    }
-
     void print() const {
         Node* tempNode = head_;
         while (tempNode != nullptr) {
@@ -36,16 +27,16 @@ public:
     }
 
     void reverse() {
-        Node* prevNode = nullptr;
-        Node* curNode = head_;
-        Node* nextNode = nullptr;
+        Node* prev = nullptr;
+        Node* cur = head_;
+        Node* next = nullptr;
 
-        while (curNode != nullptr) {
-            nextNode = curNode->next;
-            curNode->next = prevNode;
-            prevNode = curNode;
-            head_ = curNode;
-            curNode = nextNode;
+        while (cur != nullptr) {
+            next = cur->next;
+            cur->next = prev;
+            prev = cur;
+            head_ = cur;
+            cur = next;
         }
     }
 
@@ -54,28 +45,16 @@ public:
         Node* lhsNode = lhs.head_;
         Node* rhsNode = rhs.head_;
 
-        /// Как здесь уменьшить количество копирований?
-
-        while (lhsNode != nullptr && rhsNode != nullptr) {
-            if (lhsNode->data < rhsNode->data) {
-                Node* nextNode = lhsNode->next;
-                mergedList.push_front(lhsNode);
-                lhsNode = nextNode;
-            } else {
-                Node* nextNode = rhsNode->next;
+        while (lhsNode != nullptr || rhsNode != nullptr) {
+            if (lhsNode == nullptr || (rhsNode != nullptr && rhsNode->data < lhsNode->data)) {
+                Node *nextNode = rhsNode->next;
                 mergedList.push_front(rhsNode);
                 rhsNode = nextNode;
+            } else {
+                Node *nextNode = lhsNode->next;
+                mergedList.push_front(lhsNode);
+                lhsNode = nextNode;
             }
-        }
-        while (lhsNode != nullptr) {
-            Node* nextNode = lhsNode->next;
-            mergedList.push_front(lhsNode);
-            lhsNode = nextNode;
-        }
-        while (rhsNode != nullptr) {
-            Node* nextNode = rhsNode->next;
-            mergedList.push_front(rhsNode);
-            rhsNode = nextNode;
         }
 
         return mergedList;
@@ -111,30 +90,27 @@ public:
         mergedList.reverse();
 
         head_ = mergedList.head_;
-        Node* thisCurNode = head_;
-        Node* mergedCurNode = mergedList.head_;
 
-        while (thisCurNode != nullptr) {
-            thisCurNode->data = mergedCurNode->data;
-
-            thisCurNode = thisCurNode->next;
-            mergedCurNode = mergedCurNode->next;
-        }
+        *this = mergedList;
     }
 
     ~List() {
-        while (head_ != nullptr) {
-            if (isAllocated_) {
+        if (isAllocated_) {
+            while (head_ != nullptr) {
                 Node* tmp = head_->next;
                 delete head_;
                 head_ = tmp;
-            } else {
-                break;
             }
         }
     }
 
 private:
+    void push_front(Node* node) {
+        node->next = head_;
+        head_ = node;
+        ++sz_;
+    }
+
     Node* head_;
     int sz_;
     bool isAllocated_;
